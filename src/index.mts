@@ -1,6 +1,7 @@
 import inquirer from "inquirer";
 
 import eslint from "./eslint.mjs";
+import prettier from "./prettier.mjs";
 
 if (
   !process.stdin.isTTY ||
@@ -16,7 +17,7 @@ if (
 if (process.env.npm_config_local_prefix !== undefined)
   process.chdir(process.env.npm_config_local_prefix);
 
-const [eslintTasks] = await Promise.all([eslint()]);
+const [eslintTasks, prettierTasks] = await Promise.all([eslint(), prettier()]);
 
 const prompts = [];
 
@@ -29,7 +30,15 @@ if (eslintTasks.length !== 0) {
   });
 }
 
-// TODO: Prettier
+if (prettierTasks.length !== 0) {
+  prompts.push({
+    name: "prettier",
+    type: "confirm",
+    message: "Would you like to install Prettier?",
+    suffix: "",
+  });
+}
+
 // TODO: husky
 // TODO: GitHub Actions
 // TODO: PR templates
@@ -40,4 +49,5 @@ const answers = await inquirer.prompt(prompts);
 
 await Promise.all([
   ...(answers.eslint ? eslintTasks.map(async (task) => await task()) : []),
+  ...(answers.prettier ? prettierTasks.map(async (task) => await task()) : []),
 ]);

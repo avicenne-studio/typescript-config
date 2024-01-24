@@ -1,38 +1,35 @@
-import * as assert from "assert";
 import merge from "deepmerge";
 import fs from "fs/promises";
 
 import { exec, fileExists, readJSON, writeJSON } from "./utils.mjs";
 
-const DEV_DEPENDENCIES = ["@avicenne-studio/eslint-config"];
-const CONFIG_FILE = ".eslintrc.json";
-const JSON_CONFIG = {
-  extends: "@avicenne-studio",
-};
+const DEV_DEPENDENCIES = ["@avicenne-studio/prettier-config"];
+const CONFIG_FILE = ".prettierrc.json";
+const JSON_CONFIG = "@avicenne-studio/prettier-config";
 const SCRIPTS = {
-  lint: "eslint .",
-  "lint:fix": "eslint --fix .",
+  format: "prettier --write .",
+  "format:check": "prettier --check .",
 };
 
 const getExtraneousPackageConfigTask = async (): Promise<Task | undefined> => {
   const manifest = await readJSON("package.json");
 
-  if (!("eslint" in manifest)) return;
+  if (!("prettier" in manifest)) return;
 
   return () => {
     throw new Error(
-      `Extraneous ESLint config found in package.json. Delete it to continue.`,
+      `Extraneous Prettier config found in package.json. Delete it to continue.`,
     );
   };
 };
 
 const getExtraneousConfigsTasks = async (): Promise<Task | undefined> => {
   for (const file of await fs.readdir(".")) {
-    if (file === CONFIG_FILE || !file.startsWith(".eslintrc")) continue;
+    if (file === CONFIG_FILE || !file.startsWith(".prettierrc")) continue;
 
     return () => {
       throw new Error(
-        `Extraneous ESLint config file found: ${file}. Delete it to continue.`,
+        `Extraneous Prettier config file found: ${file}. Delete it to continue.`,
       );
     };
   }
@@ -73,16 +70,9 @@ const setupScriptsTask = async (): Promise<Task | undefined> => {
 const updateConfigTask = async (): Promise<Task | undefined> => {
   const previousConfig = await readJSON(CONFIG_FILE);
 
-  const updatedConfig = merge(previousConfig, JSON_CONFIG);
+  if (previousConfig === JSON_CONFIG) return;
 
-  try {
-    assert.deepEqual(updatedConfig, previousConfig);
-    return;
-  } catch (e) {
-    if (!(e instanceof assert.AssertionError)) throw e;
-  }
-
-  return async () => await writeJSON(CONFIG_FILE, updatedConfig);
+  return async () => await writeJSON(CONFIG_FILE, JSON_CONFIG);
 };
 
 const createConfigTask = async (): Promise<Task | undefined> => {

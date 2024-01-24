@@ -23,7 +23,8 @@
     "build": "rimraf dist && tsc --build",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@avicenne-studio/eslint-config": "^1.0.14",

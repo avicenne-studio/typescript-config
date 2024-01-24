@@ -17,7 +17,7 @@ export const readJSON = async (path: string) => {
   return JSON.parse(await fs.readFile(path, "utf8"));
 };
 
-export const writeJSON = async (path: string, json: object) => {
+export const writeJSON = async (path: string, json: unknown) => {
   await fs.writeFile(
     path,
     await prettier.format(JSON.stringify(json, null, "  "), {
