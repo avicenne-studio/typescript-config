@@ -1,17 +1,41 @@
 import * as assert from "assert";
 import merge from "deepmerge";
 import fs from "fs/promises";
+import inquirer from "inquirer";
 
-import { exec, fileExists, readJSON, writeJSON } from "./utils.mjs";
+import { exec, readJSON, writeJSON } from "./utils.mjs";
+
+import JSON_CONFIG from "./.eslintrc.json" assert { type: "json" };
 
 const DEV_DEPENDENCIES = ["@avicenne-studio/eslint-config"];
 const CONFIG_FILE = ".eslintrc.json";
-const JSON_CONFIG = {
-  extends: "@avicenne-studio",
-};
 const SCRIPTS = {
   lint: "eslint .",
   "lint:fix": "eslint --fix .",
+};
+
+const getExtraneousConfigFilesTasks = async (): Promise<Task | undefined> => {
+  const files = (await fs.readdir(".")).filter(
+    (file) => file !== CONFIG_FILE && file.startsWith(".eslintrc"),
+  );
+
+  if (files.length === 0) return;
+
+  return async () => {
+    for (const file of files) {
+      const { answer } = await inquirer.prompt({
+        answer: {
+          type: "confirm",
+          message: `Delete extraneous ESLint config file ${file}?`,
+          suffix: "",
+        },
+      });
+
+      if (!answer) return;
+
+      await fs.unlink(file);
+    }
+  };
 };
 
 const getExtraneousPackageConfigTask = async (): Promise<Task | undefined> => {
@@ -19,25 +43,24 @@ const getExtraneousPackageConfigTask = async (): Promise<Task | undefined> => {
 
   if (!("eslint" in manifest)) return;
 
-  return () => {
-    throw new Error(
-      `Extraneous ESLint config found in package.json. Delete it to continue.`,
+  return async () => {
+    const { answer } = await inquirer.prompt({
+      answer: {
+        type: "confirm",
+        message: "Delete extraneous ESLint config found in package.json?",
+        suffix: "",
+      },
+    });
+
+    if (!answer) return;
+
+    await writeJSON(
+      "package.json",
+      merge(await readJSON("package.json"), {
+        eslint: undefined,
+      }),
     );
   };
-};
-
-const getExtraneousConfigsTasks = async (): Promise<Task | undefined> => {
-  for (const file of await fs.readdir(".")) {
-    if (file === CONFIG_FILE || !file.startsWith(".eslintrc")) continue;
-
-    return () => {
-      throw new Error(
-        `Extraneous ESLint config file found: ${file}. Delete it to continue.`,
-      );
-    };
-  }
-
-  return await getExtraneousPackageConfigTask();
 };
 
 const installDevDependenciesTask = async (): Promise<Task | undefined> => {
@@ -49,7 +72,9 @@ const installDevDependenciesTask = async (): Promise<Task | undefined> => {
   if (missing.length === 0) return;
 
   const cmd = `npm install --save-dev ${missing.map((packageName) => JSON.stringify(packageName)).join(" ")}`;
-  return async () => await exec(cmd);
+  return async () => {
+    await exec(cmd);
+  };
 };
 
 const setupScriptsTask = async (): Promise<Task | undefined> => {
@@ -61,17 +86,41 @@ const setupScriptsTask = async (): Promise<Task | undefined> => {
   if (missing.length === 0) return;
 
   return async () => {
+    const scripts = Object.fromEntries(missing);
+
+    for (const script of Object.keys(scripts)) {
+      if (!(script in manifest.scripts)) continue;
+
+      const { answer } = await inquirer.prompt({
+        answer: {
+          type: "confirm",
+          message: `Overwrite existing NPM script ${script}?`,
+          suffix: "",
+        },
+      });
+
+      if (answer) continue;
+
+      delete scripts[script];
+    }
+
     await writeJSON(
       "package.json",
       merge(await readJSON("package.json"), {
-        scripts: Object.fromEntries(missing),
+        scripts,
       }),
     );
   };
 };
 
-const updateConfigTask = async (): Promise<Task | undefined> => {
+const createConfigTask = async (): Promise<Task | undefined> => {
   const previousConfig = await readJSON(CONFIG_FILE);
+
+  if (previousConfig === null) {
+    return async () => {
+      await writeJSON(CONFIG_FILE, JSON_CONFIG);
+    };
+  }
 
   const updatedConfig = merge(previousConfig, JSON_CONFIG);
 
@@ -85,18 +134,11 @@ const updateConfigTask = async (): Promise<Task | undefined> => {
   return async () => await writeJSON(CONFIG_FILE, updatedConfig);
 };
 
-const createConfigTask = async (): Promise<Task | undefined> => {
-  if (await fileExists(CONFIG_FILE)) return await updateConfigTask();
-
-  return async () => {
-    await writeJSON(CONFIG_FILE, JSON_CONFIG);
-  };
-};
-
 export default async () => {
   return (
     await Promise.all([
-      getExtraneousConfigsTasks(),
+      getExtraneousConfigFilesTasks(),
+      getExtraneousPackageConfigTask(),
       installDevDependenciesTask(),
       setupScriptsTask(),
       createConfigTask(),

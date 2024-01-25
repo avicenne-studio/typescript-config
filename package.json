@@ -24,13 +24,15 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@avicenne-studio/eslint-config": "^1.0.15",
     "@avicenne-studio/prettier-config": "^1.0.2",
     "@types/inquirer": "^9.0.7",
     "eslint": "^8.56.0",
+    "husky": "^9.0.5",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
