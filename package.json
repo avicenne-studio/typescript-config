@@ -1,6 +1,6 @@
 {
   "name": "@avicenne-studio/typescript-config",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Avicenne Studio's shareable TypeScript configuration bundle",
   "main": "dist/index.mjs",
   "repository": {
