@@ -18,7 +18,7 @@
   "author": "Aurélien <git@garnier.dev> (https://garnier.dev)",
   "license": "ISC",
   "scripts": {
-    "postinstall": "npm run build && node dist/index.mjs",
+    "postinstall": "node dist/index.mjs",
     "prepack": "npm run build",
     "build": "rimraf dist && tsc --build",
     "lint": "eslint .",
@@ -27,22 +27,21 @@
     "format:check": "prettier --check .",
     "prepare": "husky"
   },
+  "dependencies": {
+    "deepmerge": "^4.3.1",
+    "inquirer": "^9.2.12",
+    "prettier": "^3.2.4"
+  },
   "devDependencies": {
     "@avicenne-studio/eslint-config": "^1.0.15",
     "@avicenne-studio/prettier-config": "^1.0.2",
     "@types/inquirer": "^9.0.7",
-    "eslint": "^8.56.0",
     "husky": "^9.0.5",
-    "prettier": "^3.2.4",
     "rimraf": "^5.0.5",
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "@avicenne-studio/eslint-config": ">= 1",
     "@avicenne-studio/prettier-config": ">= 1"
-  },
-  "dependencies": {
-    "deepmerge": "^4.3.1",
-    "inquirer": "^9.2.12"
   }
 }

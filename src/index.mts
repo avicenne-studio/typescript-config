@@ -42,7 +42,8 @@ if (huskyTasks.length !== 0) {
   });
 }
 
-// TODO: tsconfig.json
+// TODO: lint-staged
+// TODO: tsconfig.json + tsc on commit
 // TODO: GitHub Actions
 // TODO: PR templates
 // TODO: commitlint

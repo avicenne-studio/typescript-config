@@ -45,10 +45,10 @@ export const writeFile = async (
 };
 
 export const writeJSON = async (filepath: string, json: unknown) => {
-  await writeFile(filepath, JSON.stringify(json, null, "  "), "json");
+  await writeFile(filepath, JSON.stringify(json), "json-stringify");
 };
 
 export const exec = async (cmd: string) => {
   // TODO: Make async
-  return execSync(cmd, { stdio: "inherit" }).toString();
+  return execSync(cmd, { stdio: "inherit" })?.toString();
 };

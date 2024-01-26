@@ -41,7 +41,7 @@ const getExtraneousConfigFilesTasks = async (): Promise<Task | undefined> => {
 const getExtraneousPackageConfigTask = async (): Promise<Task | undefined> => {
   const manifest = await readJSON("package.json");
 
-  if (!("eslint" in manifest)) return;
+  if (!manifest?.eslint) return;
 
   return async () => {
     const { answer } = await inquirer.prompt({
@@ -67,7 +67,7 @@ const installDevDependenciesTask = async (): Promise<Task | undefined> => {
   const manifest = await readJSON("package.json");
 
   const missing = DEV_DEPENDENCIES.filter(
-    (packageName) => !(packageName in manifest.devDependencies),
+    (packageName) => manifest.devDependencies?.[packageName] === undefined,
   );
   if (missing.length === 0) return;
 
@@ -89,7 +89,7 @@ const setupScriptsTask = async (): Promise<Task | undefined> => {
     const scripts = Object.fromEntries(missing);
 
     for (const script of Object.keys(scripts)) {
-      if (!(script in manifest.scripts)) continue;
+      if (manifest.scripts?.[script] === undefined) continue;
 
       const { answer } = await inquirer.prompt({
         answer: {
